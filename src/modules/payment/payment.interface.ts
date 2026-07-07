@@ -9,6 +9,7 @@ export interface ICreatePayment {
 export interface IConfirmPayment {
   paymentId?: string;
   transactionId?: string;
+  stripeSessionId?: string;
   status: PaymentStatus;
   gatewayResponse?: object;
 }

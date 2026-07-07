@@ -11,7 +11,7 @@ const createPayment = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
-    message: "Payment created successfully",
+    message: "Payment checkout session created successfully",
     data: result
   });
 });
@@ -24,6 +24,28 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.OK,
     message: "Payment confirmed successfully",
     data: result
+  });
+});
+
+const handleStripeSuccess = catchAsync(async (req: Request, res: Response) => {
+  const result = await paymentService.confirmStripePayment(req.query.session_id as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Stripe payment completed successfully. Tenant can now leave a review after rental completion.",
+    data: result
+  });
+});
+
+const handleStripeCancel = catchAsync(async (req: Request, res: Response) => {
+  sendResponse(res, {
+    success: false,
+    statusCode: httpStatus.OK,
+    message: "Stripe payment was cancelled.",
+    data: {
+      paymentId: req.query.paymentId || null
+    }
   });
 });
 
@@ -56,6 +78,8 @@ const getPaymentById = catchAsync(async (req: Request, res: Response) => {
 export const paymentController = {
   createPayment,
   confirmPayment,
+  handleStripeSuccess,
+  handleStripeCancel,
   getMyPayments,
   getPaymentById
 };
