@@ -1,0 +1,15 @@
+import { Router } from "express";
+import { Role } from "../../../generated/prisma/enums";
+import { auth } from "../../middlewares/auth";
+import { adminController } from "./admin.controller";
+
+const router: Router = Router();
+
+router.get("/users", auth(Role.ADMIN), adminController.getAllUsers);
+router.patch("/users/:id", auth(Role.ADMIN), adminController.updateUserStatus);
+router.get("/properties", auth(Role.ADMIN), adminController.getAllProperties);
+router.patch("/properties/:id/status", auth(Role.ADMIN), adminController.updatePropertyStatus);
+router.get("/rentals", auth(Role.ADMIN), adminController.getAllRentals);
+router.patch("/rentals/:id/status", auth(Role.ADMIN), adminController.updateRentalStatus);
+
+export const adminRoutes: Router = router;
