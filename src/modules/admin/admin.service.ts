@@ -3,14 +3,79 @@ import { prisma } from "../../lib/prisma";
 import { IUpdatePropertyStatus, IUpdateRentalStatus, IUpdateUserStatus } from "./admin.interface";
 
 const getAllUsers = async () => {
-  const result = await prisma.user.findMany({
-    orderBy: {
-      createdAt: "desc"
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: {
+        createdAt: "desc"
+      },
+      omit: {
+        password: true
+      },
+      include: {
+        _count: {
+          select: {
+            properties: true,
+            rentalRequests: true,
+            payments: true,
+            reviews: true
+          }
+        }
+      }
+    }),
+    prisma.user.count()
+  ]);
+
+  return {
+    data: users,
+    meta: {
+      page: 1,
+      limit: total,
+      total,
+      totalPages: total > 0 ? 1 : 0
+    }
+  };
+};
+
+const getUserById = async (userId: string) => {
+  const result = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId
     },
     omit: {
       password: true
     },
     include: {
+      properties: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        include: {
+          category: true
+        }
+      },
+      rentalRequests: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        include: {
+          property: true,
+          payment: true,
+          review: true
+        }
+      },
+      payments: {
+        orderBy: {
+          createdAt: "desc"
+        }
+      },
+      reviews: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        include: {
+          property: true
+        }
+      },
       _count: {
         select: {
           properties: true,
@@ -190,7 +255,6 @@ const getAllPayments = async () => {
   return result;
 };
 
-
 const deleteReview = async (reviewId: string) => {
   const result = await prisma.review.delete({
     where: {
@@ -209,6 +273,7 @@ const deleteReview = async (reviewId: string) => {
 
   return result;
 };
+
 const getPaymentById = async (paymentId: string) => {
   const result = await prisma.payment.findUniqueOrThrow({
     where: {
@@ -245,8 +310,10 @@ const getPaymentById = async (paymentId: string) => {
 
   return result;
 };
+
 export const adminService = {
   getAllUsers,
+  getUserById,
   updateUserStatus,
   getAllProperties,
   updatePropertyStatus,

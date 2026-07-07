@@ -26,6 +26,28 @@ const getAllCategories = async () => {
   return result;
 };
 
+const getCategoryById = async (categoryId: string) => {
+  const result = await prisma.category.findUniqueOrThrow({
+    where: {
+      id: categoryId
+    },
+    include: {
+      properties: {
+        orderBy: {
+          createdAt: "desc"
+        }
+      },
+      _count: {
+        select: {
+          properties: true
+        }
+      }
+    }
+  });
+
+  return result;
+};
+
 const updateCategory = async (categoryId: string, payload: IUpdateCategory) => {
   const result = await prisma.category.update({
     where: {
@@ -48,6 +70,7 @@ const deleteCategory = async (categoryId: string) => {
 export const categoryService = {
   createCategory,
   getAllCategories,
+  getCategoryById,
   updateCategory,
   deleteCategory
 };

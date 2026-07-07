@@ -6,6 +6,7 @@ import { categoryController } from "./category.controller";
 const router: Router = Router();
 
 router.get("/", categoryController.getAllCategories);
+router.get("/:categoryId", categoryController.getCategoryById);
 router.post("/", auth(Role.ADMIN), categoryController.createCategory);
 router.patch("/:categoryId", auth(Role.ADMIN), categoryController.updateCategory);
 router.delete("/:categoryId", auth(Role.ADMIN), categoryController.deleteCategory);

@@ -11,6 +11,18 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: httpStatus.OK,
     message: "Users retrieved successfully",
+    data: result.data,
+    meta: result.meta
+  });
+});
+
+const getUserById = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.getUserById(req.params.id as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User details retrieved successfully",
     data: result
   });
 });
@@ -82,7 +94,6 @@ const getAllPayments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
 const deleteReview = catchAsync(async (req: Request, res: Response) => {
   const result = await adminService.deleteReview(req.params.id as string);
 
@@ -93,6 +104,7 @@ const deleteReview = catchAsync(async (req: Request, res: Response) => {
     data: result
   });
 });
+
 const getPaymentById = catchAsync(async (req: Request, res: Response) => {
   const result = await adminService.getPaymentById(req.params.id as string);
 
@@ -103,8 +115,10 @@ const getPaymentById = catchAsync(async (req: Request, res: Response) => {
     data: result
   });
 });
+
 export const adminController = {
   getAllUsers,
+  getUserById,
   updateUserStatus,
   getAllProperties,
   updatePropertyStatus,
