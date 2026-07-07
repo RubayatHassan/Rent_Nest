@@ -42,27 +42,38 @@ const updateUserStatus = async (userId: string, payload: IUpdateUserStatus) => {
 };
 
 const getAllProperties = async () => {
-  const result = await prisma.property.findMany({
-    orderBy: {
-      createdAt: "desc"
-    },
-    include: {
-      category: true,
-      landlord: {
-        omit: {
-          password: true
-        }
+  const [properties, total] = await Promise.all([
+    prisma.property.findMany({
+      orderBy: {
+        createdAt: "desc"
       },
-      _count: {
-        select: {
-          rentalRequests: true,
-          reviews: true
+      include: {
+        category: true,
+        landlord: {
+          omit: {
+            password: true
+          }
+        },
+        _count: {
+          select: {
+            rentalRequests: true,
+            reviews: true
+          }
         }
       }
-    }
-  });
+    }),
+    prisma.property.count()
+  ]);
 
-  return result;
+  return {
+    data: properties,
+    meta: {
+      page: 1,
+      limit: total,
+      total,
+      totalPages: total > 0 ? 1 : 0
+    }
+  };
 };
 
 const updatePropertyStatus = async (propertyId: string, payload: IUpdatePropertyStatus) => {
