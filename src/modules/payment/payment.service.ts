@@ -4,8 +4,14 @@ import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import { IConfirmPayment, ICreatePayment } from "./payment.interface";
 
-const toStripeAmount = (amount: unknown) => {
-  return Math.round(Number(amount) * 100);
+const toStripeAmount = (amount: unknown, currency: string) => {
+  const numericAmount = Number(amount);
+
+  if (currency.toLowerCase() === "bdt") {
+    return Math.round(numericAmount);
+  }
+
+  return Math.round(numericAmount * 100);
 };
 
 const completePaymentInDB = async (paymentId: string, transactionId: string, gatewayResponse: object) => {
@@ -138,7 +144,7 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
             name: rentalRequest.property.title,
             description: rentalRequest.property.location
           },
-          unit_amount: toStripeAmount(rentalRequest.property.rentAmount)
+          unit_amount: toStripeAmount(rentalRequest.property.rentAmount, config.stripe_currency)
         },
         quantity: 1
       }
