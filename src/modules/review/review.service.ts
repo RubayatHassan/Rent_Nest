@@ -18,8 +18,11 @@ const createReview = async (tenantId: string, payload: ICreateReview) => {
     }
   });
 
-  if (rentalRequest.status !== RentalRequestStatus.COMPLETED) {
-    throw new Error("Review can be created only after a completed rental.");
+  if (
+    rentalRequest.status !== RentalRequestStatus.ACTIVE &&
+    rentalRequest.status !== RentalRequestStatus.COMPLETED
+  ) {
+    throw new Error("Review can be created only after a successful payment.");
   }
 
   if (rentalRequest.payment?.status !== PaymentStatus.COMPLETED) {
