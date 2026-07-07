@@ -15,7 +15,6 @@ router.get("/categories", auth(Role.ADMIN), categoryController.getAllCategories)
 router.get("/categories/:categoryId", auth(Role.ADMIN), categoryController.getCategoryById);
 router.post("/categories", auth(Role.ADMIN), categoryController.createCategory);
 router.patch("/categories/:categoryId", auth(Role.ADMIN), categoryController.updateCategory);
-router.delete("/categories/:categoryId", auth(Role.ADMIN), categoryController.deleteCategory);
 router.get("/payments", auth(Role.ADMIN), adminController.getAllPayments);
 router.get("/payments/:id", auth(Role.ADMIN), adminController.getPaymentById);
 router.get("/rentals", auth(Role.ADMIN), adminController.getAllRentals);
