@@ -143,11 +143,85 @@ const updateRentalStatus = async (rentalId: string, payload: IUpdateRentalStatus
   return result;
 };
 
+const getAllPayments = async () => {
+  const result = await prisma.payment.findMany({
+    orderBy: {
+      createdAt: "desc"
+    },
+    include: {
+      user: {
+        omit: {
+          password: true
+        }
+      },
+      rentalRequest: {
+        include: {
+          tenant: {
+            omit: {
+              password: true
+            }
+          },
+          property: {
+            include: {
+              category: true,
+              landlord: {
+                omit: {
+                  password: true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return result;
+};
+
+const getPaymentById = async (paymentId: string) => {
+  const result = await prisma.payment.findUniqueOrThrow({
+    where: {
+      id: paymentId
+    },
+    include: {
+      user: {
+        omit: {
+          password: true
+        }
+      },
+      rentalRequest: {
+        include: {
+          tenant: {
+            omit: {
+              password: true
+            }
+          },
+          property: {
+            include: {
+              category: true,
+              landlord: {
+                omit: {
+                  password: true
+                }
+              }
+            }
+          },
+          review: true
+        }
+      }
+    }
+  });
+
+  return result;
+};
 export const adminService = {
   getAllUsers,
   updateUserStatus,
   getAllProperties,
   updatePropertyStatus,
   getAllRentals,
-  updateRentalStatus
+  updateRentalStatus,
+  getAllPayments,
+  getPaymentById
 };

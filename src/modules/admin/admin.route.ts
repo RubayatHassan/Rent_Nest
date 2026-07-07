@@ -9,6 +9,8 @@ router.get("/users", auth(Role.ADMIN), adminController.getAllUsers);
 router.patch("/users/:id", auth(Role.ADMIN), adminController.updateUserStatus);
 router.get("/properties", auth(Role.ADMIN), adminController.getAllProperties);
 router.patch("/properties/:id/status", auth(Role.ADMIN), adminController.updatePropertyStatus);
+router.get("/payments", auth(Role.ADMIN), adminController.getAllPayments);
+router.get("/payments/:id", auth(Role.ADMIN), adminController.getPaymentById);
 router.get("/rentals", auth(Role.ADMIN), adminController.getAllRentals);
 router.patch("/rentals/:id/status", auth(Role.ADMIN), adminController.updateRentalStatus);
 

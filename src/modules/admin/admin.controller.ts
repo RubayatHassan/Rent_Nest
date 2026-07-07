@@ -70,11 +70,34 @@ const updateRentalStatus = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllPayments = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.getAllPayments();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Payments retrieved successfully",
+    data: result
+  });
+});
+
+const getPaymentById = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.getPaymentById(req.params.id as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Payment details retrieved successfully",
+    data: result
+  });
+});
 export const adminController = {
   getAllUsers,
   updateUserStatus,
   getAllProperties,
   updatePropertyStatus,
   getAllRentals,
-  updateRentalStatus
+  updateRentalStatus,
+  getAllPayments,
+  getPaymentById
 };
