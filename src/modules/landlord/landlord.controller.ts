@@ -22,7 +22,8 @@ const getMyProperties = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: httpStatus.OK,
     message: "Landlord properties retrieved successfully",
-    data: result
+    data: result.data,
+    meta: result.meta
   });
 });
 

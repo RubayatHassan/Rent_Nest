@@ -19,25 +19,38 @@ const createProperty = async (landlordId: string, payload: ICreateProperty) => {
 };
 
 const getMyProperties = async (landlordId: string) => {
-  const result = await prisma.property.findMany({
-    where: {
-      landlordId
-    },
-    orderBy: {
-      createdAt: "desc"
-    },
-    include: {
-      category: true,
-      _count: {
-        select: {
-          rentalRequests: true,
-          reviews: true
+  const where = {
+    landlordId
+  };
+
+  const [properties, total] = await Promise.all([
+    prisma.property.findMany({
+      where,
+      orderBy: {
+        createdAt: "desc"
+      },
+      include: {
+        category: true,
+        _count: {
+          select: {
+            rentalRequests: true,
+            reviews: true
+          }
         }
       }
-    }
-  });
+    }),
+    prisma.property.count({ where })
+  ]);
 
-  return result;
+  return {
+    data: properties,
+    meta: {
+      page: 1,
+      limit: total,
+      total,
+      totalPages: total > 0 ? 1 : 0
+    }
+  };
 };
 
 const updateProperty = async (propertyId: string, landlordId: string, payload: IUpdateProperty) => {
