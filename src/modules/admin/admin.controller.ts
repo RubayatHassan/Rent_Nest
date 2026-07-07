@@ -82,6 +82,17 @@ const getAllPayments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const deleteReview = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.deleteReview(req.params.id as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Review deleted successfully",
+    data: result
+  });
+});
 const getPaymentById = catchAsync(async (req: Request, res: Response) => {
   const result = await adminService.getPaymentById(req.params.id as string);
 
@@ -100,5 +111,6 @@ export const adminController = {
   getAllRentals,
   updateRentalStatus,
   getAllPayments,
-  getPaymentById
+  getPaymentById,
+  deleteReview
 };

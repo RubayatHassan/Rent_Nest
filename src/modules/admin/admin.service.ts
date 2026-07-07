@@ -190,6 +190,25 @@ const getAllPayments = async () => {
   return result;
 };
 
+
+const deleteReview = async (reviewId: string) => {
+  const result = await prisma.review.delete({
+    where: {
+      id: reviewId
+    },
+    include: {
+      tenant: {
+        omit: {
+          password: true
+        }
+      },
+      property: true,
+      rentalRequest: true
+    }
+  });
+
+  return result;
+};
 const getPaymentById = async (paymentId: string) => {
   const result = await prisma.payment.findUniqueOrThrow({
     where: {
@@ -234,5 +253,6 @@ export const adminService = {
   getAllRentals,
   updateRentalStatus,
   getAllPayments,
-  getPaymentById
+  getPaymentById,
+  deleteReview
 };

@@ -13,5 +13,6 @@ router.get("/payments", auth(Role.ADMIN), adminController.getAllPayments);
 router.get("/payments/:id", auth(Role.ADMIN), adminController.getPaymentById);
 router.get("/rentals", auth(Role.ADMIN), adminController.getAllRentals);
 router.patch("/rentals/:id/status", auth(Role.ADMIN), adminController.updateRentalStatus);
+router.delete("/reviews/:id", auth(Role.ADMIN), adminController.deleteReview);
 
 export const adminRoutes: Router = router;
