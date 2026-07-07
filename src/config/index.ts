@@ -14,7 +14,7 @@ export default {
   jwt_access_expires_in: process.env.JWT_ACCESS_EXPIRES_IN!,
   jwt_refresh_expires_in: process.env.JWT_REFRESH_EXPIRES_IN!,
   stripe_secret_key: process.env.STRIPE_SECRET_KEY,
-  stripe_currency: process.env.STRIPE_CURRENCY || "usd",
+  stripe_currency: process.env.STRIPE_CURRENCY || "bdt",
   sslcommerz_store_id: process.env.SSLCOMMERZ_STORE_ID,
   sslcommerz_store_password: process.env.SSLCOMMERZ_STORE_PASSWORD
 };
