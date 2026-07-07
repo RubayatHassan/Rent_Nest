@@ -128,6 +128,7 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
       payment,
       paymentUrl: oldGatewayResponse.checkoutUrl,
       stripeSessionId: oldGatewayResponse.stripeSessionId,
+      successUrl: `${config.server_url}/api/payments/success?session_id=${oldGatewayResponse.stripeSessionId}`,
       demoCard: "4242 4242 4242 4242"
     };
   }
@@ -177,6 +178,8 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
     payment: updatedPayment,
     paymentUrl: session.url,
     stripeSessionId: session.id,
+    successUrl: `${config.server_url}/api/payments/success?session_id=${session.id}`,
+    cancelUrl: `${config.server_url}/api/payments/cancel?paymentId=${payment.id}`,
     demoCard: "4242 4242 4242 4242"
   };
 };

@@ -28,12 +28,26 @@ const confirmPayment = catchAsync(async (req: Request, res: Response) => {
 });
 
 const handleStripeSuccess = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentService.confirmStripePayment(req.query.session_id as string);
+  const sessionId = req.query.session_id as string | undefined;
+
+  if (!sessionId) {
+    sendResponse(res, {
+      success: false,
+      statusCode: httpStatus.BAD_REQUEST,
+      message: "Stripe session_id is required. Open the paymentUrl from /api/payments/create and complete payment first.",
+      data: {
+        example: "/api/payments/success?session_id=cs_test_..."
+      }
+    });
+    return;
+  }
+
+  const result = await paymentService.confirmStripePayment(sessionId);
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: "Stripe payment completed successfully. Tenant can now leave a review after rental completion.",
+    message: "Stripe payment completed successfully. Tenant can now leave a review.",
     data: result
   });
 });
