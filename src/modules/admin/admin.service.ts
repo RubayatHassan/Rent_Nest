@@ -141,6 +141,56 @@ const getAllProperties = async () => {
   };
 };
 
+
+const getPropertyById = async (propertyId: string) => {
+  const result = await prisma.property.findUniqueOrThrow({
+    where: {
+      id: propertyId
+    },
+    include: {
+      category: true,
+      landlord: {
+        omit: {
+          password: true
+        }
+      },
+      rentalRequests: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        include: {
+          tenant: {
+            omit: {
+              password: true
+            }
+          },
+          payment: true,
+          review: true
+        }
+      },
+      reviews: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        include: {
+          tenant: {
+            omit: {
+              password: true
+            }
+          }
+        }
+      },
+      _count: {
+        select: {
+          rentalRequests: true,
+          reviews: true
+        }
+      }
+    }
+  });
+
+  return result;
+};
 const updatePropertyStatus = async (propertyId: string, payload: IUpdatePropertyStatus) => {
   const result = await prisma.property.update({
     where: {
@@ -316,6 +366,7 @@ export const adminService = {
   getUserById,
   updateUserStatus,
   getAllProperties,
+  getPropertyById,
   updatePropertyStatus,
   getAllRentals,
   updateRentalStatus,

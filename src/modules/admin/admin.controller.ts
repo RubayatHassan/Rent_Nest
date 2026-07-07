@@ -50,6 +50,17 @@ const getAllProperties = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getPropertyById = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.getPropertyById(req.params.id as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Property details retrieved successfully",
+    data: result
+  });
+});
 const updatePropertyStatus = catchAsync(async (req: Request, res: Response) => {
   const result = await adminService.updatePropertyStatus(req.params.id as string, req.body);
 
@@ -121,6 +132,7 @@ export const adminController = {
   getUserById,
   updateUserStatus,
   getAllProperties,
+  getPropertyById,
   updatePropertyStatus,
   getAllRentals,
   updateRentalStatus,

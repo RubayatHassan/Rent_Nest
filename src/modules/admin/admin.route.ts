@@ -11,6 +11,7 @@ router.get("/users/:id", auth(Role.ADMIN), adminController.getUserById);
 router.patch("/users/:id", auth(Role.ADMIN), adminController.updateUserStatus);
 router.get("/properties", auth(Role.ADMIN), adminController.getAllProperties);
 router.patch("/properties/:id/status", auth(Role.ADMIN), adminController.updatePropertyStatus);
+router.get("/properties/:id", auth(Role.ADMIN), adminController.getPropertyById);
 router.get("/categories", auth(Role.ADMIN), categoryController.getAllCategories);
 router.get("/categories/:categoryId", auth(Role.ADMIN), categoryController.getCategoryById);
 router.post("/categories", auth(Role.ADMIN), categoryController.createCategory);
