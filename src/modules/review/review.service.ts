@@ -2,14 +2,18 @@ import { PaymentStatus, RentalRequestStatus } from "../../../generated/prisma/en
 import { prisma } from "../../lib/prisma";
 import { ICreateReview, IUpdateReview } from "./review.interface";
 
-const validateRating = (rating: number) => {
-  if (rating < 1 || rating > 5) {
-    throw new Error("Rating must be between 1 and 5.");
+const validateRating = (rating: number | string) => {
+  const numericRating = Number(rating);
+
+  if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+    throw new Error("Rating must be an integer between 1 and 5.");
   }
+
+  return numericRating;
 };
 
 const createReview = async (tenantId: string, payload: ICreateReview) => {
-  validateRating(payload.rating);
+  const rating = validateRating(payload.rating);
 
   const rentalRequest = await prisma.rentalRequest.findUniqueOrThrow({
     where: {
@@ -42,7 +46,7 @@ const createReview = async (tenantId: string, payload: ICreateReview) => {
       tenantId,
       propertyId: rentalRequest.propertyId,
       rentalRequestId: rentalRequest.id,
-      rating: payload.rating,
+      rating,
       comment: payload.comment
     },
     include: {
@@ -58,29 +62,40 @@ const createReview = async (tenantId: string, payload: ICreateReview) => {
   return result;
 };
 
-const updateMyReview = async (tenantId: string, reviewId: string, payload: IUpdateReview) => {
-  if (payload.rating !== undefined) {
-    validateRating(payload.rating);
+const updateMyReview = async (tenantId: string, reviewOrRentalRequestId: string, payload: IUpdateReview) => {
+  if (payload.rating === undefined && payload.comment === undefined) {
+    throw new Error("Rating or comment is required to update a review.");
   }
 
-  const review = await prisma.review.findUniqueOrThrow({
+  const review = await prisma.review.findFirstOrThrow({
     where: {
-      id: reviewId
+      tenantId,
+      OR: [
+        {
+          id: reviewOrRentalRequestId
+        },
+        {
+          rentalRequestId: reviewOrRentalRequestId
+        }
+      ]
     }
   });
 
-  if (review.tenantId !== tenantId) {
-    throw new Error("You can update only your own review.");
+  const updateData: { rating?: number; comment?: string } = {};
+
+  if (payload.rating !== undefined) {
+    updateData.rating = validateRating(payload.rating);
+  }
+
+  if (payload.comment !== undefined) {
+    updateData.comment = payload.comment;
   }
 
   const result = await prisma.review.update({
     where: {
-      id: reviewId
+      id: review.id
     },
-    data: {
-      rating: payload.rating,
-      comment: payload.comment
-    },
+    data: updateData,
     include: {
       property: true,
       tenant: {
@@ -94,20 +109,24 @@ const updateMyReview = async (tenantId: string, reviewId: string, payload: IUpda
   return result;
 };
 
-const deleteMyReview = async (tenantId: string, reviewId: string) => {
-  const review = await prisma.review.findUniqueOrThrow({
+const deleteMyReview = async (tenantId: string, reviewOrRentalRequestId: string) => {
+  const review = await prisma.review.findFirstOrThrow({
     where: {
-      id: reviewId
+      tenantId,
+      OR: [
+        {
+          id: reviewOrRentalRequestId
+        },
+        {
+          rentalRequestId: reviewOrRentalRequestId
+        }
+      ]
     }
   });
 
-  if (review.tenantId !== tenantId) {
-    throw new Error("You can delete only your own review.");
-  }
-
   const result = await prisma.review.delete({
     where: {
-      id: reviewId
+      id: review.id
     }
   });
 

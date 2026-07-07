@@ -1,10 +1,10 @@
 export interface ICreateReview {
   rentalRequestId: string;
-  rating: number;
+  rating: number | string;
   comment?: string;
 }
 
 export interface IUpdateReview {
-  rating?: number;
+  rating?: number | string;
   comment?: string;
 }
