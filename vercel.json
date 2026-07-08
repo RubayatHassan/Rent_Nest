@@ -3,18 +3,15 @@
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install --frozen-lockfile",
   "functions": {
-    "api/index.js": {
+    "api/index.cjs": {
       "maxDuration": 30,
-      "includeFiles": [
-        "dist/**",
-        "generated/**"
-      ]
+      "includeFiles": "{dist/**,generated/**}"
     }
   },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/index.js"
+      "dest": "/api/index.cjs"
     }
   ]
 }

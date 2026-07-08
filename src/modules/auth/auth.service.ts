@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import httpStatus from "http-status";
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import { Role } from "../../../generated/prisma/enums";
-import config from "../../config";
+import config from "../../config/index";
 import { AppError } from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";

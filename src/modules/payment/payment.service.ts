@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import { PaymentProvider, PaymentStatus, PropertyStatus, RentalRequestStatus } from "../../../generated/prisma/enums";
 import { AppError } from "../../errors/AppError";
-import config from "../../config";
+import config from "../../config/index";
 import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
 import { IConfirmPayment, ICreatePayment } from "./payment.interface";

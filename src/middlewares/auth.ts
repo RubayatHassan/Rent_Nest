@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { JwtPayload } from "jsonwebtoken";
 import { Role } from "../../generated/prisma/enums";
-import config from "../config";
+import config from "../config/index";
 import { AppError } from "../errors/AppError";
 import { prisma } from "../lib/prisma";
 import { catchAsync } from "../utils/catchAsync";

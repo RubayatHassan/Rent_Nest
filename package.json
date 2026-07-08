@@ -4,7 +4,6 @@
   "description": "RentNest rental property backend",
   "license": "ISC",
   "author": "",
-  "type": "module",
   "main": "server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
