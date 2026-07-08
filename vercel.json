@@ -1,16 +1,20 @@
 {
   "version": 2,
-  "buildCommand": "pnpm prisma:generate && pnpm build",
+  "buildCommand": "pnpm build",
   "installCommand": "pnpm install --frozen-lockfile",
   "functions": {
-    "api/index.ts": {
-      "maxDuration": 30
+    "api/index.js": {
+      "maxDuration": 30,
+      "includeFiles": [
+        "dist/**",
+        "generated/**"
+      ]
     }
   },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/index.ts"
+      "dest": "/api/index.js"
     }
   ]
 }
