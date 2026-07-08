@@ -1,7 +1,9 @@
 import bcrypt from "bcryptjs";
+import httpStatus from "http-status";
 import { JwtPayload, SignOptions } from "jsonwebtoken";
 import { Role } from "../../../generated/prisma/enums";
 import config from "../../config";
+import { AppError } from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import { ILoginUser, IRegisterUser } from "./auth.interface";
@@ -31,7 +33,7 @@ const createAuthTokens = (user: { id: string; name: string; email: string; role:
 
 const registerUser = async (payload: IRegisterUser) => {
   if (payload.role === Role.ADMIN) {
-    throw new Error("Admin registration is not allowed from public endpoint.");
+    throw new AppError(httpStatus.FORBIDDEN, "Admin registration is not allowed from public endpoint.");
   }
 
   const hashedPassword = await bcrypt.hash(payload.password, Number(config.bcrypt_salt_rounds));
@@ -67,13 +69,13 @@ const loginUser = async (payload: ILoginUser) => {
   });
 
   if (user.activeStatus === "BLOCKED") {
-    throw new Error("Your account has been blocked. Please contact support.");
+    throw new AppError(httpStatus.FORBIDDEN, "Your account has been blocked. Please contact support.");
   }
 
   const isPasswordMatched = await bcrypt.compare(payload.password, user.password);
 
   if (!isPasswordMatched) {
-    throw new Error("Password is incorrect.");
+    throw new AppError(httpStatus.UNAUTHORIZED, "Password is incorrect.");
   }
 
   return createAuthTokens(user);
@@ -96,7 +98,7 @@ const refreshToken = async (refreshToken: string) => {
   const verifiedRefreshToken = jwtUtils.verifyToken(refreshToken, config.jwt_refresh_secret);
 
   if (!verifiedRefreshToken.success) {
-    throw new Error(verifiedRefreshToken.error);
+    throw new AppError(httpStatus.UNAUTHORIZED, verifiedRefreshToken.error);
   }
 
   const { id } = verifiedRefreshToken.data as JwtPayload;
@@ -108,7 +110,7 @@ const refreshToken = async (refreshToken: string) => {
   });
 
   if (user.activeStatus === "BLOCKED") {
-    throw new Error("User is blocked.");
+    throw new AppError(httpStatus.FORBIDDEN, "User is blocked.");
   }
 
   const { accessToken } = createAuthTokens(user);

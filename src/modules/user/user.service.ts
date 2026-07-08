@@ -1,3 +1,5 @@
+import httpStatus from "http-status";
+import { AppError } from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { IUpdateMyProfile } from "./user.interface";
 
@@ -25,7 +27,7 @@ const updateMyProfile = async (userId: string, payload: IUpdateMyProfile) => {
   });
 
   if (!Object.keys(updateData).length) {
-    throw new Error("No valid profile field provided for update.");
+    throw new AppError(httpStatus.BAD_REQUEST, "No valid profile field provided for update.");
   }
 
   const result = await prisma.user.update({
@@ -58,11 +60,19 @@ const removeMyProfilePhoto = async (userId: string) => {
 };
 
 const deleteMyAccount = async (userId: string) => {
-  await prisma.user.delete({
+  const result = await prisma.user.update({
     where: {
       id: userId
+    },
+    data: {
+      activeStatus: "BLOCKED"
+    },
+    omit: {
+      password: true
     }
   });
+
+  return result;
 };
 
 export const userService = {

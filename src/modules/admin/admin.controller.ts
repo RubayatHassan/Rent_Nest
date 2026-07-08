@@ -5,7 +5,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { adminService } from "./admin.service";
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await adminService.getAllUsers();
+  const result = await adminService.getAllUsers(req.query as Record<string, string | undefined>);
 
   sendResponse(res, {
     success: true,
@@ -39,7 +39,7 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllProperties = catchAsync(async (req: Request, res: Response) => {
-  const result = await adminService.getAllProperties();
+  const result = await adminService.getAllProperties(req.query as Record<string, string | undefined>);
 
   sendResponse(res, {
     success: true,
@@ -73,7 +73,7 @@ const updatePropertyStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllRentals = catchAsync(async (req: Request, res: Response) => {
-  const result = await adminService.getAllRentals();
+  const result = await adminService.getAllRentals(req.query as Record<string, string | undefined>);
 
   sendResponse(res, {
     success: true,
@@ -95,7 +95,7 @@ const updateRentalStatus = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllPayments = catchAsync(async (req: Request, res: Response) => {
-  const result = await adminService.getAllPayments();
+  const result = await adminService.getAllPayments(req.query as Record<string, string | undefined>);
 
   sendResponse(res, {
     success: true,

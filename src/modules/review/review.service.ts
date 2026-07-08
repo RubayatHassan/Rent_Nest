@@ -1,4 +1,6 @@
+import httpStatus from "http-status";
 import { PaymentStatus, RentalRequestStatus } from "../../../generated/prisma/enums";
+import { AppError } from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { ICreateReview, IUpdateReview } from "./review.interface";
 
@@ -6,7 +8,7 @@ const validateRating = (rating: number | string) => {
   const numericRating = Number(rating);
 
   if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
-    throw new Error("Rating must be an integer between 1 and 5.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Rating must be an integer between 1 and 5.");
   }
 
   return numericRating;
@@ -30,15 +32,15 @@ const createReview = async (tenantId: string, payload: ICreateReview) => {
     rentalRequest.status !== RentalRequestStatus.ACTIVE &&
     rentalRequest.status !== RentalRequestStatus.COMPLETED
   ) {
-    throw new Error("Review can be created only after a successful payment.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Review can be created only after a successful payment.");
   }
 
   if (rentalRequest.payment?.status !== PaymentStatus.COMPLETED) {
-    throw new Error("Review requires a completed payment.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Review requires a completed payment.");
   }
 
   if (rentalRequest.review) {
-    throw new Error("Review already exists for this rental request.");
+    throw new AppError(httpStatus.CONFLICT, "Review already exists for this rental request.");
   }
 
   const result = await prisma.review.create({
@@ -64,7 +66,7 @@ const createReview = async (tenantId: string, payload: ICreateReview) => {
 
 const updateMyReview = async (tenantId: string, reviewOrRentalRequestId: string, payload: IUpdateReview) => {
   if (payload.rating === undefined && payload.comment === undefined) {
-    throw new Error("Rating or comment is required to update a review.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Rating or comment is required to update a review.");
   }
 
   const review = await prisma.review.findFirstOrThrow({

@@ -38,7 +38,7 @@ const removeMyProfilePhoto = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteMyAccount = catchAsync(async (req: Request, res: Response) => {
-  await userService.deleteMyAccount(req.user?.id as string);
+  const result = await userService.deleteMyAccount(req.user?.id as string);
 
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");

@@ -3,12 +3,24 @@ import { PropertyWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 import { IPropertyQuery } from "./property.interface";
 
+const allowedSortFields = ["createdAt", "updatedAt", "rentAmount", "title", "location"] as const;
+
+const getPositiveNumber = (value: string | undefined, fallback: number, max?: number) => {
+  const numericValue = Number(value);
+
+  if (!Number.isInteger(numericValue) || numericValue < 1) {
+    return fallback;
+  }
+
+  return max ? Math.min(numericValue, max) : numericValue;
+};
+
 const getAllProperties = async (query: IPropertyQuery) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
+  const limit = getPositiveNumber(query.limit, 10, 100);
+  const page = getPositiveNumber(query.page, 1);
   const skip = (page - 1) * limit;
-  const sortBy = query.sortBy || "createdAt";
-  const sortOrder = query.sortOrder || "desc";
+  const sortBy = allowedSortFields.includes(query.sortBy as any) ? query.sortBy as string : "createdAt";
+  const sortOrder = query.sortOrder === "asc" ? "asc" : "desc";
 
   const andConditions: PropertyWhereInput[] = [
     {
@@ -89,31 +101,32 @@ const getAllProperties = async (query: IPropertyQuery) => {
     AND: andConditions
   };
 
-  const properties = await prisma.property.findMany({
-    where,
-    take: limit,
-    skip,
-    orderBy: {
-      [sortBy]: sortOrder
-    },
-    include: {
-      category: true,
-      landlord: {
-        omit: {
-          password: true
-        }
+  const [properties, total] = await Promise.all([
+    prisma.property.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy: {
+        [sortBy]: sortOrder
       },
-      reviews: true,
-      _count: {
-        select: {
-          rentalRequests: true,
-          reviews: true
+      include: {
+        category: true,
+        landlord: {
+          omit: {
+            password: true
+          }
+        },
+        reviews: true,
+        _count: {
+          select: {
+            rentalRequests: true,
+            reviews: true
+          }
         }
       }
-    }
-  });
-
-  const total = await prisma.property.count({ where });
+    }),
+    prisma.property.count({ where })
+  ]);
 
   return {
     data: properties,

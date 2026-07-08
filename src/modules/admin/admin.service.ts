@@ -1,10 +1,73 @@
-import { PropertyStatus, RentalRequestStatus } from "../../../generated/prisma/enums";
+import { ActiveStatus, PaymentProvider, PaymentStatus, PropertyStatus, RentalRequestStatus, Role } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { IUpdatePropertyStatus, IUpdateRentalStatus, IUpdateUserStatus } from "./admin.interface";
 
-const getAllUsers = async () => {
+type TAdminQuery = Record<string, string | undefined>;
+
+const getPagination = (query: TAdminQuery) => {
+  const pageValue = Number(query.page);
+  const limitValue = Number(query.limit);
+  const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
+  const limit = Number.isInteger(limitValue) && limitValue > 0 ? Math.min(limitValue, 100) : 10;
+
+  return {
+    page,
+    limit,
+    skip: (page - 1) * limit
+  };
+};
+
+const getMeta = (page: number, limit: number, total: number) => ({
+  page,
+  limit,
+  total,
+  totalPages: Math.ceil(total / limit)
+});
+
+const isEnumValue = <T extends Record<string, string>>(enumObject: T, value: string | undefined): value is T[keyof T] => {
+  return !!value && Object.values(enumObject).includes(value);
+};
+
+const getAllUsers = async (query: TAdminQuery = {}) => {
+  const { page, limit, skip } = getPagination(query);
+  const where: any = {};
+
+  if (query.searchTerm) {
+    where.OR = [
+      {
+        name: {
+          contains: query.searchTerm,
+          mode: "insensitive"
+        }
+      },
+      {
+        email: {
+          contains: query.searchTerm,
+          mode: "insensitive"
+        }
+      },
+      {
+        phone: {
+          contains: query.searchTerm,
+          mode: "insensitive"
+        }
+      }
+    ];
+  }
+
+  if (isEnumValue(Role, query.role)) {
+    where.role = query.role;
+  }
+
+  if (isEnumValue(ActiveStatus, query.activeStatus)) {
+    where.activeStatus = query.activeStatus;
+  }
+
   const [users, total] = await Promise.all([
     prisma.user.findMany({
+      where,
+      take: limit,
+      skip,
       orderBy: {
         createdAt: "desc"
       },
@@ -22,17 +85,12 @@ const getAllUsers = async () => {
         }
       }
     }),
-    prisma.user.count()
+    prisma.user.count({ where })
   ]);
 
   return {
     data: users,
-    meta: {
-      page: 1,
-      limit: total,
-      total,
-      totalPages: total > 0 ? 1 : 0
-    }
+    meta: getMeta(page, limit, total)
   };
 };
 
@@ -106,9 +164,57 @@ const updateUserStatus = async (userId: string, payload: IUpdateUserStatus) => {
   return result;
 };
 
-const getAllProperties = async () => {
+const getAllProperties = async (query: TAdminQuery = {}) => {
+  const { page, limit, skip } = getPagination(query);
+  const where: any = {};
+
+  if (query.searchTerm) {
+    where.OR = [
+      {
+        title: {
+          contains: query.searchTerm,
+          mode: "insensitive"
+        }
+      },
+      {
+        description: {
+          contains: query.searchTerm,
+          mode: "insensitive"
+        }
+      },
+      {
+        location: {
+          contains: query.searchTerm,
+          mode: "insensitive"
+        }
+      }
+    ];
+  }
+
+  if (query.location) {
+    where.location = {
+      contains: query.location,
+      mode: "insensitive"
+    };
+  }
+
+  if (query.categoryId) {
+    where.categoryId = query.categoryId;
+  }
+
+  if (query.landlordId) {
+    where.landlordId = query.landlordId;
+  }
+
+  if (isEnumValue(PropertyStatus, query.status)) {
+    where.status = query.status;
+  }
+
   const [properties, total] = await Promise.all([
     prisma.property.findMany({
+      where,
+      take: limit,
+      skip,
       orderBy: {
         createdAt: "desc"
       },
@@ -127,20 +233,14 @@ const getAllProperties = async () => {
         }
       }
     }),
-    prisma.property.count()
+    prisma.property.count({ where })
   ]);
 
   return {
     data: properties,
-    meta: {
-      page: 1,
-      limit: total,
-      total,
-      totalPages: total > 0 ? 1 : 0
-    }
+    meta: getMeta(page, limit, total)
   };
 };
-
 
 const getPropertyById = async (propertyId: string) => {
   const result = await prisma.property.findUniqueOrThrow({
@@ -191,6 +291,7 @@ const getPropertyById = async (propertyId: string) => {
 
   return result;
 };
+
 const updatePropertyStatus = async (propertyId: string, payload: IUpdatePropertyStatus) => {
   const result = await prisma.property.update({
     where: {
@@ -204,32 +305,62 @@ const updatePropertyStatus = async (propertyId: string, payload: IUpdateProperty
   return result;
 };
 
-const getAllRentals = async () => {
-  const result = await prisma.rentalRequest.findMany({
-    orderBy: {
-      createdAt: "desc"
-    },
-    include: {
-      tenant: {
-        omit: {
-          password: true
-        }
+const getAllRentals = async (query: TAdminQuery = {}) => {
+  const { page, limit, skip } = getPagination(query);
+  const where: any = {};
+
+  if (isEnumValue(RentalRequestStatus, query.status)) {
+    where.status = query.status;
+  }
+
+  if (query.tenantId) {
+    where.tenantId = query.tenantId;
+  }
+
+  if (query.propertyId) {
+    where.propertyId = query.propertyId;
+  }
+
+  if (query.landlordId) {
+    where.property = {
+      landlordId: query.landlordId
+    };
+  }
+
+  const [rentals, total] = await Promise.all([
+    prisma.rentalRequest.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy: {
+        createdAt: "desc"
       },
-      property: {
-        include: {
-          landlord: {
-            omit: {
-              password: true
+      include: {
+        tenant: {
+          omit: {
+            password: true
+          }
+        },
+        property: {
+          include: {
+            landlord: {
+              omit: {
+                password: true
+              }
             }
           }
-        }
-      },
-      payment: true,
-      review: true
-    }
-  });
+        },
+        payment: true,
+        review: true
+      }
+    }),
+    prisma.rentalRequest.count({ where })
+  ]);
 
-  return result;
+  return {
+    data: rentals,
+    meta: getMeta(page, limit, total)
+  };
 };
 
 const updateRentalStatus = async (rentalId: string, payload: IUpdateRentalStatus) => {
@@ -269,40 +400,68 @@ const updateRentalStatus = async (rentalId: string, payload: IUpdateRentalStatus
   return result;
 };
 
-const getAllPayments = async () => {
-  const result = await prisma.payment.findMany({
-    orderBy: {
-      createdAt: "desc"
-    },
-    include: {
-      user: {
-        omit: {
-          password: true
-        }
+const getAllPayments = async (query: TAdminQuery = {}) => {
+  const { page, limit, skip } = getPagination(query);
+  const where: any = {};
+
+  if (query.userId) {
+    where.userId = query.userId;
+  }
+
+  if (query.rentalRequestId) {
+    where.rentalRequestId = query.rentalRequestId;
+  }
+
+  if (isEnumValue(PaymentStatus, query.status)) {
+    where.status = query.status;
+  }
+
+  if (isEnumValue(PaymentProvider, query.provider)) {
+    where.provider = query.provider;
+  }
+
+  const [payments, total] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy: {
+        createdAt: "desc"
       },
-      rentalRequest: {
-        include: {
-          tenant: {
-            omit: {
-              password: true
-            }
-          },
-          property: {
-            include: {
-              category: true,
-              landlord: {
-                omit: {
-                  password: true
+      include: {
+        user: {
+          omit: {
+            password: true
+          }
+        },
+        rentalRequest: {
+          include: {
+            tenant: {
+              omit: {
+                password: true
+              }
+            },
+            property: {
+              include: {
+                category: true,
+                landlord: {
+                  omit: {
+                    password: true
+                  }
                 }
               }
             }
           }
         }
       }
-    }
-  });
+    }),
+    prisma.payment.count({ where })
+  ]);
 
-  return result;
+  return {
+    data: payments,
+    meta: getMeta(page, limit, total)
+  };
 };
 
 const deleteReview = async (reviewId: string) => {

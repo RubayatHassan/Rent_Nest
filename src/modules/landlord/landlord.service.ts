@@ -1,4 +1,6 @@
+import httpStatus from "http-status";
 import { PropertyStatus, RentalRequestStatus } from "../../../generated/prisma/enums";
+import { AppError } from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { ICreateProperty, IUpdateProperty } from "../property/property.interface";
 
@@ -82,11 +84,19 @@ const deleteProperty = async (propertyId: string, landlordId: string) => {
     }
   });
 
-  await prisma.property.delete({
+  const result = await prisma.property.update({
     where: {
       id: propertyId
+    },
+    data: {
+      status: PropertyStatus.UNAVAILABLE
+    },
+    include: {
+      category: true
     }
   });
+
+  return result;
 };
 
 const getRentalRequests = async (landlordId: string) => {
@@ -122,7 +132,7 @@ const updateRentalRequestStatus = async (
     payload.status !== RentalRequestStatus.APPROVED &&
     payload.status !== RentalRequestStatus.REJECTED
   ) {
-    throw new Error("Landlord can only approve or reject a rental request.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Landlord can only approve or reject a rental request.");
   }
 
   const rentalRequest = await prisma.rentalRequest.findUniqueOrThrow({
@@ -135,11 +145,11 @@ const updateRentalRequestStatus = async (
   });
 
   if (rentalRequest.property.landlordId !== landlordId) {
-    throw new Error("You are not allowed to manage this rental request.");
+    throw new AppError(httpStatus.FORBIDDEN, "You are not allowed to manage this rental request.");
   }
 
   if (rentalRequest.status !== RentalRequestStatus.PENDING) {
-    throw new Error("Only pending rental requests can be updated.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Only pending rental requests can be updated.");
   }
 
   const result = await prisma.rentalRequest.update({

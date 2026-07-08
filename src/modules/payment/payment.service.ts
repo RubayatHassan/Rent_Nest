@@ -1,4 +1,6 @@
+import httpStatus from "http-status";
 import { PaymentProvider, PaymentStatus, PropertyStatus, RentalRequestStatus } from "../../../generated/prisma/enums";
+import { AppError } from "../../errors/AppError";
 import config from "../../config";
 import { prisma } from "../../lib/prisma";
 import { stripe } from "../../lib/stripe";
@@ -79,11 +81,11 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
   });
 
   if (rentalRequest.status !== RentalRequestStatus.APPROVED) {
-    throw new Error("Payment can be created only for approved rental requests.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Payment can be created only for approved rental requests.");
   }
 
   if (rentalRequest.payment?.status === PaymentStatus.COMPLETED) {
-    throw new Error("This rental request is already paid.");
+    throw new AppError(httpStatus.CONFLICT, "This rental request is already paid.");
   }
 
   if (payload.provider !== PaymentProvider.STRIPE) {
@@ -107,7 +109,7 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
   }
 
   if (!config.stripe_secret_key) {
-    throw new Error("STRIPE_SECRET_KEY is not configured.");
+    throw new AppError(httpStatus.SERVICE_UNAVAILABLE, "STRIPE_SECRET_KEY is not configured.");
   }
 
   const payment = rentalRequest.payment || await prisma.payment.create({
@@ -186,19 +188,19 @@ const createPayment = async (userId: string, payload: ICreatePayment) => {
 
 const confirmStripePayment = async (sessionId: string) => {
   if (!sessionId) {
-    throw new Error("Stripe session_id is required.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Stripe session_id is required.");
   }
 
   const session = await stripe.checkout.sessions.retrieve(sessionId);
 
   if (session.payment_status !== "paid") {
-    throw new Error("Stripe payment is not completed yet.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Stripe payment is not completed yet.");
   }
 
   const paymentId = session.metadata?.paymentId;
 
   if (!paymentId) {
-    throw new Error("Payment id not found in Stripe session metadata.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Payment id not found in Stripe session metadata.");
   }
 
   const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : session.id;
@@ -293,7 +295,7 @@ const getPaymentById = async (paymentId: string, userId: string, isAdmin: boolea
   const isLandlord = payment.rentalRequest.property.landlordId === userId;
 
   if (!isAdmin && !isTenant && !isLandlord) {
-    throw new Error("You are not allowed to view this payment.");
+    throw new AppError(httpStatus.FORBIDDEN, "You are not allowed to view this payment.");
   }
 
   return payment;

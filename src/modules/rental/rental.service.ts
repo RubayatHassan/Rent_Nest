@@ -1,4 +1,6 @@
+import httpStatus from "http-status";
 import { PropertyStatus, RentalRequestStatus } from "../../../generated/prisma/enums";
+import { AppError } from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { ICreateRentalRequest } from "./rental.interface";
 
@@ -10,11 +12,11 @@ const createRentalRequest = async (tenantId: string, payload: ICreateRentalReque
   });
 
   if (property.status !== PropertyStatus.AVAILABLE) {
-    throw new Error("This property is not available for rent.");
+    throw new AppError(httpStatus.BAD_REQUEST, "This property is not available for rent.");
   }
 
   if (property.landlordId === tenantId) {
-    throw new Error("You cannot submit a rental request for your own property.");
+    throw new AppError(httpStatus.BAD_REQUEST, "You cannot submit a rental request for your own property.");
   }
 
   const existingRequest = await prisma.rentalRequest.findFirst({
@@ -28,7 +30,7 @@ const createRentalRequest = async (tenantId: string, payload: ICreateRentalReque
   });
 
   if (existingRequest) {
-    throw new Error("You already have an active rental request for this property.");
+    throw new AppError(httpStatus.CONFLICT, "You already have an active rental request for this property.");
   }
 
   const result = await prisma.rentalRequest.create({
@@ -95,7 +97,7 @@ const getRentalRequestById = async (requestId: string, userId: string, isAdmin: 
   const isLandlord = result.property.landlordId === userId;
 
   if (!isAdmin && !isTenant && !isLandlord) {
-    throw new Error("You are not allowed to view this rental request.");
+    throw new AppError(httpStatus.FORBIDDEN, "You are not allowed to view this rental request.");
   }
 
   return result;
@@ -110,7 +112,7 @@ const cancelRentalRequest = async (requestId: string, tenantId: string) => {
   });
 
   if (rentalRequest.status !== RentalRequestStatus.PENDING) {
-    throw new Error("Only pending rental requests can be cancelled.");
+    throw new AppError(httpStatus.BAD_REQUEST, "Only pending rental requests can be cancelled.");
   }
 
   const result = await prisma.rentalRequest.update({

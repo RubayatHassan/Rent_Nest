@@ -1,6 +1,21 @@
 import { prisma } from "../../lib/prisma";
 import { ICreateCategory, IUpdateCategory } from "./category.interface";
 
+type TCategoryQuery = Record<string, string | undefined>;
+
+const getPagination = (query: TCategoryQuery) => {
+  const pageValue = Number(query.page);
+  const limitValue = Number(query.limit);
+  const page = Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
+  const limit = Number.isInteger(limitValue) && limitValue > 0 ? Math.min(limitValue, 100) : 10;
+
+  return {
+    page,
+    limit,
+    skip: (page - 1) * limit
+  };
+};
+
 const createCategory = async (payload: ICreateCategory) => {
   const result = await prisma.category.create({
     data: payload
@@ -9,21 +24,55 @@ const createCategory = async (payload: ICreateCategory) => {
   return result;
 };
 
-const getAllCategories = async () => {
-  const result = await prisma.category.findMany({
-    orderBy: {
-      name: "asc"
-    },
-    include: {
-      _count: {
-        select: {
-          properties: true
+const getAllCategories = async (query: TCategoryQuery = {}) => {
+  const { page, limit, skip } = getPagination(query);
+  const where = query.searchTerm
+    ? {
+        OR: [
+          {
+            name: {
+              contains: query.searchTerm,
+              mode: "insensitive" as const
+            }
+          },
+          {
+            description: {
+              contains: query.searchTerm,
+              mode: "insensitive" as const
+            }
+          }
+        ]
+      }
+    : {};
+
+  const [categories, total] = await Promise.all([
+    prisma.category.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy: {
+        name: "asc"
+      },
+      include: {
+        _count: {
+          select: {
+            properties: true
+          }
         }
       }
-    }
-  });
+    }),
+    prisma.category.count({ where })
+  ]);
 
-  return result;
+  return {
+    data: categories,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  };
 };
 
 const getCategoryById = async (categoryId: string) => {
